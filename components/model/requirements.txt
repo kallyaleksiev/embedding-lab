@@ -1,0 +1,4 @@
+Flask
+numpy
+torch
+transformers

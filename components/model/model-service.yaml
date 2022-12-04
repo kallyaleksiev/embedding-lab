@@ -1,0 +1,13 @@
+# expose the model to other pods within the cluster
+apiVersion: v1
+kind: Service 
+metadata: 
+  name: arachne-model-service
+  labels:
+    purpose: arachne-model
+spec:
+  selector:
+    purpose: arachne-model
+  ports:
+  - port: 8080
+    targetPort: 5000

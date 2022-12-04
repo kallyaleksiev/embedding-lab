@@ -1,0 +1,132 @@
+# the main gateway which orchestrates the entire thing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arachne-gateway-deployment
+  labels:
+    purpose: arachne-gateway
+spec:
+  selector:
+    matchLabels: 
+      purpose: arachne-gateway
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        purpose: arachne-gateway
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+      - name: arachne-gateway-container
+        image: localhost:${port}/gateway:v0
+        env:
+        - name: REDIS_HOSTNAME
+          value: arachne-redis-service
+        - name: SEARCH_HOST
+          value: arachne-search-service
+        ports:
+        - containerPort: 5000
+---
+# expose it with a LoadBalancer to easily get an
+# external IP address if deploying to AKS or EKS
+apiVersion: v1
+kind: Service 
+metadata: 
+  name: arachne-gateway-service
+  labels:
+    purpose: arachne-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    purpose: arachne-gateway
+  ports:
+  - port: 8080
+    targetPort: 5000
+---
+# redis for storing key-value pairs 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arachne-redis-deployment
+  labels:
+    purpose: arachne-redis
+spec:
+  selector:
+    matchLabels:
+      purpose: arachne-redis
+  replicas: 1
+  template: 
+    metadata:
+      labels: 
+        purpose: arachne-redis
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+      - name: arachne-redis-container
+        image: localhost:${port}/redis:v0
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        ports:
+        - containerPort: 6379
+          name: redis
+---
+# expose the redis to other pods within the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: arachne-redis-service
+  labels:
+    purpose: arachne-redis
+spec:
+  selector:
+    purpose: arachne-redis
+  ports:
+  - port: 6379
+    targetPort: redis
+---
+# a deployment responsible for semantic search
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arachne-search-deployment
+  labels:
+    purpose: arachne-search
+spec:
+  selector:
+    matchLabels: 
+      purpose: arachne-search
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        purpose: arachne-search
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+      - name: arachne-search-container
+        image: localhost:${port}/search:v0
+        env:
+        - name: NPROBE
+          value: "10"
+        - name: SEARCH_K
+          value: "10"
+        ports:
+        - containerPort: 5000
+---
+# expose the search to other pods within the cluster
+apiVersion: v1
+kind: Service 
+metadata: 
+  name: arachne-search-service
+  labels:
+    purpose: arachne-search
+spec:
+  selector:
+    purpose: arachne-search
+  ports:
+  - port: 8080
+    targetPort: 5000

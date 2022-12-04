@@ -1,0 +1,24 @@
+# a model container which computes embeddings
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arachne-model-deployment
+  labels:
+    purpose: arachne-model
+spec:
+  selector:
+    matchLabels: 
+      purpose: arachne-model
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        purpose: arachne-model
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+      - name: arachne-model-container
+        image: localhost:${port}/model:v0
+        ports:
+        - containerPort: 5000
