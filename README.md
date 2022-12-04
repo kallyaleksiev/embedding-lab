@@ -1,4 +1,4 @@
-# arachne
+# embedding-lab
 
 This project is an "embedding lab" running as a kubernetes cluster. The idea is to allow you to conveniently obtain embeddings of documents via a REST API and search for closest matches usign the [faiss](https://github.com/facebookresearch/faiss) library. 
 
